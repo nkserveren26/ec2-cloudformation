@@ -5,54 +5,54 @@ Parameters:
     Description: The EC2 Key Pair to allow SSH access to the instance
     Type: "AWS::EC2::KeyPair::KeyName"
 Resources:
-  FirstVPC:
+  VPC:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: 10.0.0.0/16
       Tags:
       - Key: Name
-        Value: FirstVPC
+        Value: VPC
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
       - Key: Name
-        Value: FirstVPC-IGW
+        Value: VPC-IGW
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
-      VpcId: !Ref FirstVPC
+      VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
-  FrontendRouteTable:
+  PubSub-RouteTable:
     Type: AWS::EC2::RouteTable
     DependsOn: AttachGateway
     Properties:
-      VpcId: !Ref FirstVPC
+      VpcId: !Ref VPC
       Tags:
       - Key: Name
-        Value: FirstVPC-FrontendRoute
-  FrontendRoute:
+        Value: PubSub-RouteTable
+  PubSubToInternet:
     Type: AWS::EC2::Route
     DependsOn: AttachGateway
     Properties:
-      RouteTableId: !Ref FrontendRouteTable
+      RouteTableId: !Ref PubSub-RouteTable
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
-  FrontendSubnet:
+  PublicSubnet:
     Type: AWS::EC2::Subnet
     DependsOn: AttachGateway
     Properties:
       CidrBlock: 10.0.1.0/24
       MapPublicIpOnLaunch: 'true'
-      VpcId: !Ref FirstVPC
+      VpcId: !Ref VPC
       Tags:
       - Key: Name
-        Value: FirstVPC-FrontendSubnet
+        Value: VPC-PublicSubnet
   FrontendSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref FrontendSubnet
-      RouteTableId: !Ref FrontendRouteTable
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PubSub-RouteTable
   EC2: 
     Type: AWS::EC2::Instance
     DependsOn: FrontendSubnetRouteTableAssociation
@@ -63,7 +63,7 @@ Resources:
       NetworkInterfaces: 
         - AssociatePublicIpAddress: "true"
           DeviceIndex: "0"
-          SubnetId: !Ref FrontendSubnet
+          SubnetId: !Ref PublicSubnet
           GroupSet:
             - !Ref EC2SG
       UserData: !Base64 |
@@ -79,7 +79,7 @@ Resources:
     Properties:
       GroupName: ec2-sg-cf
       GroupDescription: Allow SSH and HTTP access only MyIP
-      VpcId: !Ref FirstVPC
+      VpcId: !Ref VPC
       SecurityGroupIngress:
         # http
         - IpProtocol: tcp
