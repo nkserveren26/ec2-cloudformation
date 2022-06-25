@@ -5,6 +5,7 @@ Parameters:
     Description: The EC2 Key Pair to allow SSH access to the instance
     Type: "AWS::EC2::KeyPair::KeyName"
 Resources:
+  # VPCの作成
   VPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -12,32 +13,37 @@ Resources:
       Tags:
       - Key: Name
         Value: VPC
+  # InternetGatewayの作成
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
       - Key: Name
         Value: VPC-IGW
+  # VPCにInternetGatewayをアタッチ
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
-  PubSub-RouteTable:
+  # ルートテーブルの作成
+  PubSubRouteTable:
     Type: AWS::EC2::RouteTable
     DependsOn: AttachGateway
     Properties:
       VpcId: !Ref VPC
       Tags:
       - Key: Name
-        Value: PubSub-RouteTable
+        Value: PubSubRouteTable
+  # PubSub-インターネット間のルーティング
   PubSubToInternet:
     Type: AWS::EC2::Route
     DependsOn: AttachGateway
     Properties:
-      RouteTableId: !Ref PubSub-RouteTable
+      RouteTableId: !Ref PubSubRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
+  # パブリックサブネットの作成
   PublicSubnet:
     Type: AWS::EC2::Subnet
     DependsOn: AttachGateway
@@ -48,14 +54,16 @@ Resources:
       Tags:
       - Key: Name
         Value: VPC-PublicSubnet
-  FrontendSubnetRouteTableAssociation:
+  # パブリックサブネットにルートテーブルを関連付け
+  SubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnet
-      RouteTableId: !Ref PubSub-RouteTable
+      RouteTableId: !Ref PubSubRouteTable
+  # EC2の作成
   EC2: 
     Type: AWS::EC2::Instance
-    DependsOn: FrontendSubnetRouteTableAssociation
+    DependsOn: SubnetRouteTableAssociation
     Properties: 
       ImageId: ami-00d101850e971728d
       KeyName: !Ref KeyName
@@ -66,6 +74,7 @@ Resources:
           SubnetId: !Ref PublicSubnet
           GroupSet:
             - !Ref EC2SG
+      # nginxのインストール・起動設定
       UserData: !Base64 |
         #!/bin/bash
         sudo amazon-linux-extras install -y nginx1
@@ -73,7 +82,8 @@ Resources:
         sudo systemctl enable nginx
       Tags:
           - Key: Name
-            Value: ec2-a-cf
+            Value: ec2-nginx
+  # SGの作成
   EC2SG:
     Type: AWS::EC2::SecurityGroup
     Properties:
