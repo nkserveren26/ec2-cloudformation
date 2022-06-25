@@ -1,0 +1,2 @@
+# ec2-cloudformation
+Nginxが動作するEC2インスタンスを構築するCloudFormationのyamlファイル
