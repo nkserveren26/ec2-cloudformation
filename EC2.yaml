@@ -5,7 +5,7 @@ Parameters:
     Description: The EC2 Key Pair to allow SSH access to the instance
     Type: "AWS::EC2::KeyPair::KeyName"
 Resources:
-  # VPCã®ä½œæˆ
+  # VPC‚Ìì¬
   VPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -13,20 +13,20 @@ Resources:
       Tags:
       - Key: Name
         Value: VPC
-  # InternetGatewayã®ä½œæˆ
+  # InternetGateway‚Ìì¬
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
       - Key: Name
         Value: VPC-IGW
-  # VPCã«InternetGatewayã‚’ã‚¢ã‚¿ãƒƒãƒ
+  # VPC‚ÉInternetGateway‚ğƒAƒ^ƒbƒ`
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
-  # ãƒ«ãƒ¼ãƒˆãƒ†ãƒ¼ãƒ–ãƒ«ã®ä½œæˆ
+  # ƒ‹[ƒgƒe[ƒuƒ‹‚Ìì¬
   PubSubRouteTable:
     Type: AWS::EC2::RouteTable
     DependsOn: AttachGateway
@@ -35,7 +35,7 @@ Resources:
       Tags:
       - Key: Name
         Value: PubSubRouteTable
-  # PubSub-ã‚¤ãƒ³ã‚¿ãƒ¼ãƒãƒƒãƒˆé–“ã®ãƒ«ãƒ¼ãƒ†ã‚£ãƒ³ã‚°
+  # PubSub-ƒCƒ“ƒ^[ƒlƒbƒgŠÔ‚Ìƒ‹[ƒeƒBƒ“ƒO
   PubSubToInternet:
     Type: AWS::EC2::Route
     DependsOn: AttachGateway
@@ -43,7 +43,7 @@ Resources:
       RouteTableId: !Ref PubSubRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
-  # ãƒ‘ãƒ–ãƒªãƒƒã‚¯ã‚µãƒ–ãƒãƒƒãƒˆã®ä½œæˆ
+  # ƒpƒuƒŠƒbƒNƒTƒuƒlƒbƒg‚Ìì¬
   PublicSubnet:
     Type: AWS::EC2::Subnet
     DependsOn: AttachGateway
@@ -54,13 +54,13 @@ Resources:
       Tags:
       - Key: Name
         Value: VPC-PublicSubnet
-  # ãƒ‘ãƒ–ãƒªãƒƒã‚¯ã‚µãƒ–ãƒãƒƒãƒˆã«ãƒ«ãƒ¼ãƒˆãƒ†ãƒ¼ãƒ–ãƒ«ã‚’é–¢é€£ä»˜ã‘
+  # ƒpƒuƒŠƒbƒNƒTƒuƒlƒbƒg‚Éƒ‹[ƒgƒe[ƒuƒ‹‚ğŠÖ˜A•t‚¯
   SubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnet
       RouteTableId: !Ref PubSubRouteTable
-  # EC2ã®ä½œæˆ
+  # EC2‚Ìì¬
   EC2: 
     Type: AWS::EC2::Instance
     DependsOn: SubnetRouteTableAssociation
@@ -74,7 +74,7 @@ Resources:
           SubnetId: !Ref PublicSubnet
           GroupSet:
             - !Ref EC2SG
-      # nginxã®ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«ãƒ»èµ·å‹•è¨­å®š
+      # nginx‚ÌƒCƒ“ƒXƒg[ƒ‹E‹N“®İ’è
       UserData: !Base64 |
         #!/bin/bash
         sudo amazon-linux-extras install -y nginx1
@@ -83,7 +83,7 @@ Resources:
       Tags:
           - Key: Name
             Value: ec2-nginx
-  # SGã®ä½œæˆ
+  # SG‚Ìì¬
   EC2SG:
     Type: AWS::EC2::SecurityGroup
     Properties:
