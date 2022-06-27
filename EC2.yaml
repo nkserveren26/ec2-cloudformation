@@ -35,7 +35,7 @@ Resources:
       Tags:
       - Key: Name
         Value: PubSubRouteTable
-  # PubSub-インターネット間のルーティング
+  # PubSub-インターネット間のルーティング設定
   PubSubToInternet:
     Type: AWS::EC2::Route
     DependsOn: AttachGateway
